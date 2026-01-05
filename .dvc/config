@@ -1,0 +1,4 @@
+[core]
+    remote = storage
+['remote "storage"']
+    url = gdrive://1mUBlgE9aVe7V2x9l9xDVYlip_brLdK7X?dmr=1&ec=wgc-drive-hero-goto
