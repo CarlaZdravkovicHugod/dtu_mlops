@@ -58,3 +58,8 @@ line-length = 120
 
 [tool.coverage.run]
 omit = ["tests/*"]
+
+[project.scripts]
+train = "s2_exercises.train:main"
+evaluate = "s2_exercises.evaluate:main"
+visualize = "s2_exercises.visualize:main"
