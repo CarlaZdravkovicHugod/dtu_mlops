@@ -1,27 +1,66 @@
 import matplotlib.pyplot as plt
 import torch
-import typer
 from data import corrupt_mnist
 from model import Model
+import hydra
+import logging
+import torch.optim as optim
+from omegaconf import DictConfig, OmegaConf
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+log = logging.getLogger(__name__)
 
 
-def train(lr: float = 1e-3, batch_size: int = 32, epochs: int = 2) -> None:
+def get_device(device_config: str) -> torch.device:
+    """Get the appropriate device based on configuration."""
+    if device_config == "auto":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            return torch.device("mps")
+        else:
+            return torch.device("cpu")
+    return torch.device(device_config)
+
+
+@hydra.main(version_base=None, config_path="config", config_name="config")
+def train(config: DictConfig) -> None:
     """Train a model on MNIST."""
-    print("Training day and night")
-    print(f"{lr=}, {batch_size=}, {epochs=}")
+    log.info("Training day and night")
+    log.info(f"Configuration: \n{OmegaConf.to_yaml(config)}")
 
-    model = Model().to(DEVICE)
+    # Set random seed for reproducibility
+    if hasattr(config.training, 'seed'):
+        torch.manual_seed(config.training.seed)
+
+    # Get device
+    DEVICE = get_device(config.training.device)
+    log.info(f"Using device: {DEVICE}")
+
+    # Initialize model with configuration
+    model = Model(
+        conv1_out_channels=config.model.conv1_out_channels,
+        conv1_kernel_size=config.model.conv1_kernel_size,
+        conv1_stride=config.model.conv1_stride,
+        conv2_out_channels=config.model.conv2_out_channels,
+        conv2_kernel_size=config.model.conv2_kernel_size,
+        conv2_stride=config.model.conv2_stride,
+        conv3_out_channels=config.model.conv3_out_channels,
+        conv3_kernel_size=config.model.conv3_kernel_size,
+        conv3_stride=config.model.conv3_stride,
+        dropout_rate=config.model.dropout_rate,
+        fc1_out_features=config.model.fc1_out_features,
+    ).to(DEVICE)
+    
+    log.info(f"Model initialized with {sum(p.numel() for p in model.parameters())} parameters")
+
     train_set, _ = corrupt_mnist()
-
-    train_dataloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size)
+    train_dataloader = torch.utils.data.DataLoader(train_set, batch_size=config.training.batch_size)
 
     loss_fn = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = hydra.utils.instantiate(config.optimizer, params=model.parameters())
 
     statistics = {"train_loss": [], "train_accuracy": []}
-    for epoch in range(epochs):
+    for epoch in range(config.training.epochs):
         model.train()
         for i, (img, target) in enumerate(train_dataloader):
             img, target = img.to(DEVICE), target.to(DEVICE)
@@ -35,19 +74,38 @@ def train(lr: float = 1e-3, batch_size: int = 32, epochs: int = 2) -> None:
             accuracy = (y_pred.argmax(dim=1) == target).float().mean().item()
             statistics["train_accuracy"].append(accuracy)
 
-            if i % 100 == 0:
-                print(f"Epoch {epoch}, iter {i}, loss: {loss.item()}")
+            if i % config.training.log_interval == 0:
+                log.info(f"Epoch {epoch}, iter {i}, loss: {loss.item():.4f}, accuracy: {accuracy:.4f}")
 
-    print("Training complete")
+    log.info("Training complete")
 
-    torch.save(model.state_dict(), "s2_organisation_and_version_control/s2/models/model.pth")
-    fig, axs = plt.subplots(1, 2, figsize=(15, 5))
-    axs[0].plot(statistics["train_loss"])
-    axs[0].set_title("Train loss")
-    axs[1].plot(statistics["train_accuracy"])
-    axs[1].set_title("Train accuracy")
-    fig.savefig("s2_organisation_and_version_control/s2/reports/figures/training_statistics.png")
+    # Save model if configured
+    if config.training.save_model:
+        # Use Hydra's output directory or the configured path
+        import os
+        model_path = config.training.model_path
+        model_dir = os.path.dirname(model_path)
+        if model_dir:  # Only create directory if path contains one
+            os.makedirs(model_dir, exist_ok=True)
+        torch.save(model.state_dict(), model_path)
+        log.info(f"Model saved to {os.path.abspath(model_path)}")
+
+    # Save plots if configured
+    if config.training.save_plots:
+        import os
+        plot_path = config.training.plot_path
+        plot_dir = os.path.dirname(plot_path)
+        if plot_dir:  # Only create directory if path contains one
+            os.makedirs(plot_dir, exist_ok=True)
+        fig, axs = plt.subplots(1, 2, figsize=(15, 5))
+        axs[0].plot(statistics["train_loss"])
+        axs[0].set_title("Train loss")
+        axs[1].plot(statistics["train_accuracy"])
+        axs[1].set_title("Train accuracy")
+        fig.savefig(plot_path)
+        log.info(f"Training statistics saved to {os.path.abspath(plot_path)}")
 
 
 if __name__ == "__main__":
-    typer.run(train)
+    train()
+

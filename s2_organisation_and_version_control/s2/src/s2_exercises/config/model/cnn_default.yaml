@@ -1,0 +1,15 @@
+# Default CNN model configuration
+conv1_out_channels: 32
+conv1_kernel_size: 3
+conv1_stride: 1
+
+conv2_out_channels: 64
+conv2_kernel_size: 3
+conv2_stride: 1
+
+conv3_out_channels: 128
+conv3_kernel_size: 3
+conv3_stride: 1
+
+dropout_rate: 0.5
+fc1_out_features: 10

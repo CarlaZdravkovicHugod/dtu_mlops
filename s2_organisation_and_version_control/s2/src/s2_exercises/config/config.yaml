@@ -1,0 +1,10 @@
+defaults:
+  - model: cnn_default
+  - training: default
+  - optimizer: adam
+  - _self_
+
+# Override from command line with:
+# python train.py model=cnn_small
+# python train.py training=quick
+# python train.py optimizer=nesterov

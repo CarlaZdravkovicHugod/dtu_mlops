@@ -1,0 +1,7 @@
+# @package _global_
+
+# Experiment 1: Quick test with small model and Adam
+defaults:
+  - override /model: cnn_small
+  - override /training: quick
+  - override /optimizer: adam

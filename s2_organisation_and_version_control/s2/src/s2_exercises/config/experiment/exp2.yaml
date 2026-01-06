@@ -1,0 +1,7 @@
+# @package _global_
+
+# Experiment 2: Full training with default model and Adam
+defaults:
+  - override /model: cnn_default
+  - override /training: default
+  - override /optimizer: adam

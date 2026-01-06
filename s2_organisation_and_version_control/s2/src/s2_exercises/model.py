@@ -5,13 +5,26 @@ import torch
 class Model(nn.Module):
     """My awesome model."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        conv1_out_channels: int = 32,
+        conv1_kernel_size: int = 3,
+        conv1_stride: int = 1,
+        conv2_out_channels: int = 64,
+        conv2_kernel_size: int = 3,
+        conv2_stride: int = 1,
+        conv3_out_channels: int = 128,
+        conv3_kernel_size: int = 3,
+        conv3_stride: int = 1,
+        dropout_rate: float = 0.5,
+        fc1_out_features: int = 10,
+    ) -> None:
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, 1)
-        self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        self.conv3 = nn.Conv2d(64, 128, 3, 1)
-        self.dropout = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(128, 10)
+        self.conv1 = nn.Conv2d(1, conv1_out_channels, conv1_kernel_size, conv1_stride)
+        self.conv2 = nn.Conv2d(conv1_out_channels, conv2_out_channels, conv2_kernel_size, conv2_stride)
+        self.conv3 = nn.Conv2d(conv2_out_channels, conv3_out_channels, conv3_kernel_size, conv3_stride)
+        self.dropout = nn.Dropout(dropout_rate)
+        self.fc1 = nn.Linear(conv3_out_channels, fc1_out_features)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass."""

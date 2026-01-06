@@ -1,0 +1,18 @@
+# Long training configuration (for production)
+batch_size: 32
+epochs: 10
+seed: 42
+
+# Device configuration
+device: auto
+
+# Checkpointing
+save_model: true
+model_path: "model.pth"
+
+# Plotting
+save_plots: true
+plot_path: "training_statistics.png"
+
+# Logging frequency
+log_interval: 100
