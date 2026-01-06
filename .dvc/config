@@ -2,3 +2,5 @@
     remote = storage
 ['remote "storage"']
     url = gdrive://1mUBlgE9aVe7V2x9l9xDVYlip_brLdK7X?dmr=1&ec=wgc-drive-hero-goto
+    gdrive_use_service_account = true
+    gdrive_service_account_json_file_path = /Users/carlahugod/.dvc/dtu-mlops-dvc-70c9645b8517.json
