@@ -1,7 +1,0 @@
-# @package _global_
-
-# Experiment 3: Large model with longer training and Nesterov optimizer
-defaults:
-  - override /model: cnn_large
-  - override /training: long
-  - override /optimizer: nesterov
